@@ -19,7 +19,7 @@ SpotCheck/
 │   │   └── index.ts
 ├── server/                     # Node.js + Express + Prisma REST API
 │   ├── prisma/
-│   │   ├── schema.prisma       # Normalized PostgreSQL database schema
+│   │   ├── schema.prisma       # MongoDB database schema (Prisma ORM)
 │   │   └── seed.ts             # Realistic facility, template & user seed data
 │   ├── src/
 │   │   ├── routes/             # Versioned REST endpoints (/api/v1/*)
@@ -116,7 +116,17 @@ REPORTED ──> ASSIGNED ──> IN_PROGRESS ──> RESOLVED ──> VERIFIED 
 
 ### Prerequisites
 - Node.js (v18+)
-- PostgreSQL (v14+) running locally on port 5432 (or configured in `server/.env`)
+- MongoDB (v6.0+) running with replica set enabled (Prisma requires a replica set for interactive transactions and nested mutations)
+
+> **MongoDB Replica Set Note:**
+> If running a local `mongod`, initialize a single-node replica set `rs0`:
+> ```bash
+> # Example: Start local mongod with replica set rs0
+> mongod --port 27018 --dbpath ./mongo-data --replSet rs0 --bind_ip 127.0.0.1
+>
+> # In mongosh:
+> rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: '127.0.0.1:27018' }] })
+> ```
 
 ### Setup Instructions
 
@@ -129,15 +139,15 @@ REPORTED ──> ASSIGNED ──> IN_PROGRESS ──> RESOLVED ──> VERIFIED 
    ```bash
    cp server/.env.example server/.env
    ```
-   Ensure `DATABASE_URL` in `server/.env` points to your PostgreSQL instance:
+   Ensure `DATABASE_URL` in `server/.env` points to your MongoDB instance with replica set:
    ```env
-   DATABASE_URL=postgresql://spotcheck:spotcheck@127.0.0.1:5432/spotcheck?schema=public
+   DATABASE_URL=mongodb://127.0.0.1:27018/spotcheck?replicaSet=rs0&directConnection=true
    ```
 
-3. **Run Prisma Migrations & Seed Data:**
+3. **Push Schema & Seed Database:**
    ```bash
    npm run prisma:generate
-   npm run prisma:migrate
+   npm run prisma:push
    npm run prisma:seed
    ```
 

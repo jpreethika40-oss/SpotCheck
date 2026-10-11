@@ -15,7 +15,8 @@
     "build": "npm --prefix shared run build && npm --prefix server run build && npm --prefix client run build",
     "test": "npm --prefix server run test",
     "prisma:generate": "npm --prefix server run prisma:generate",
-    "prisma:migrate": "npm --prefix server run prisma:migrate",
+    "prisma:migrate": "npm --prefix server run prisma:push",
+    "prisma:push": "npm --prefix server run prisma:push",
     "prisma:seed": "npm --prefix server run seed"
   },
   "devDependencies": {

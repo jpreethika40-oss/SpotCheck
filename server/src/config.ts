@@ -6,7 +6,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 export const config = {
   port: parseInt(process.env.PORT || '5000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
-  databaseUrl: process.env.DATABASE_URL || 'postgresql://spotcheck:spotcheck@127.0.0.1:5433/spotcheck?schema=public',
+  databaseUrl: process.env.DATABASE_URL || 'mongodb://127.0.0.1:27018/spotcheck?replicaSet=rs0&directConnection=true',
   jwtSecret: process.env.JWT_SECRET || 'spotcheck_dev_jwt_secret_key_83749281749283749283749',
   cookieSecret: process.env.COOKIE_SECRET || 'spotcheck_dev_cookie_secret_98374928174928374928',
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',

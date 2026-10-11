@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
@@ -94,7 +94,7 @@ enum UploadStatus {
 }
 
 model User {
-  id           String    @id @default(uuid())
+  id           String    @id @default(uuid()) @map("_id")
   email        String    @unique
   passwordHash String
   fullName     String
@@ -104,23 +104,22 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  sessions         UserSession[]
+  sessions           UserSession[]
   assignedFacilities UserFacilityAssignment[]
-  inspections      Inspection[]
-  reportedIssues   Issue[]               @relation("ReportedByUser")
-  assignedIssues   Issue[]               @relation("AssignedToUser")
-  verifiedIssues   Issue[]               @relation("VerifiedByUser")
-  workOrderEvents  WorkOrderEvent[]
-  schedules        InspectionSchedule[]
-  auditEvents      AuditEvent[]
-  notifications    AppNotification[]
+  inspections        Inspection[]
+  reportedIssues     Issue[]                  @relation("ReportedByUser")
+  assignedIssues     Issue[]                  @relation("AssignedToUser")
+  verifiedIssues     Issue[]                  @relation("VerifiedByUser")
+  workOrderEvents    WorkOrderEvent[]
+  schedules          InspectionSchedule[]
+  auditEvents        AuditEvent[]
+  notifications      AppNotification[]
 
-  @@index([email])
   @@index([role])
 }
 
 model UserSession {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @map("_id")
   userId    String
   token     String   @unique
   expiresAt DateTime
@@ -130,12 +129,11 @@ model UserSession {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([token])
   @@index([userId])
 }
 
 model Facility {
-  id           String       @id @default(uuid())
+  id           String       @id @default(uuid()) @map("_id")
   name         String
   code         String       @unique
   type         FacilityType @default(COMMERCIAL)
@@ -151,20 +149,19 @@ model Facility {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  zones       Zone[]
-  checkpoints Checkpoint[]
-  assets      Asset[]
-  inspections Inspection[]
-  issues      Issue[]
-  schedules   InspectionSchedule[]
+  zones         Zone[]
+  checkpoints   Checkpoint[]
+  assets        Asset[]
+  inspections   Inspection[]
+  issues        Issue[]
+  schedules     InspectionSchedule[]
   assignedUsers UserFacilityAssignment[]
 
-  @@index([code])
   @@index([name])
 }
 
 model UserFacilityAssignment {
-  id         String   @id @default(uuid())
+  id         String   @id @default(uuid()) @map("_id")
   userId     String
   facilityId String
   createdAt  DateTime @default(now())
@@ -178,7 +175,7 @@ model UserFacilityAssignment {
 }
 
 model Zone {
-  id          String   @id @default(uuid())
+  id          String   @id @default(uuid()) @map("_id")
   facilityId  String
   name        String
   code        String
@@ -198,7 +195,7 @@ model Zone {
 }
 
 model Checkpoint {
-  id                  String   @id @default(uuid())
+  id                  String   @id @default(uuid()) @map("_id")
   zoneId              String
   facilityId          String
   name                String
@@ -220,11 +217,10 @@ model Checkpoint {
   @@unique([zoneId, code])
   @@index([zoneId])
   @@index([facilityId])
-  @@index([qrCodeToken])
 }
 
 model Asset {
-  id               String        @id @default(uuid())
+  id               String        @id @default(uuid()) @map("_id")
   facilityId       String
   zoneId           String?
   checkpointId     String?
@@ -247,11 +243,10 @@ model Asset {
   issues      Issue[]
 
   @@index([facilityId])
-  @@index([assetTag])
 }
 
 model InspectionTemplate {
-  id           String        @id @default(uuid())
+  id           String        @id @default(uuid()) @map("_id")
   name         String
   description  String?
   facilityType FacilityType?
@@ -270,7 +265,7 @@ model InspectionTemplate {
 }
 
 model InspectionSchedule {
-  id           String            @id @default(uuid())
+  id           String            @id @default(uuid()) @map("_id")
   facilityId   String
   templateId   String
   assignedToId String?
@@ -290,7 +285,7 @@ model InspectionSchedule {
 }
 
 model Inspection {
-  id               String           @id @default(uuid()) // Client-generated UUID or generated
+  id               String           @id @default(uuid()) @map("_id") // Client-generated UUID or generated
   templateId       String
   templateVersion  Int
   facilityId       String
@@ -325,7 +320,7 @@ model Inspection {
 }
 
 model Issue {
-  id                    String          @id @default(uuid()) // Client-generated UUID or generated
+  id                    String          @id @default(uuid()) @map("_id") // Client-generated UUID or generated
   facilityId            String
   zoneId                String?
   checkpointId          String?
@@ -367,7 +362,7 @@ model Issue {
 }
 
 model WorkOrderEvent {
-  id                    String          @id @default(uuid())
+  id                    String          @id @default(uuid()) @map("_id")
   issueId               String
   actorId               String
   fromStatus            WorkOrderStatus
@@ -384,7 +379,7 @@ model WorkOrderEvent {
 }
 
 model Attachment {
-  id             String       @id @default(uuid()) // Client-generated UUID or generated
+  id             String       @id @default(uuid()) @map("_id") // Client-generated UUID or generated
   filename       String
   contentType    String
   byteSize       Int
@@ -405,7 +400,7 @@ model Attachment {
 }
 
 model SyncOperationRecord {
-  id              String   @id @default(uuid())
+  id              String   @id @default(uuid()) @map("_id")
   operationId     String   @unique
   idempotencyKey  String   @unique
   entityType      String
@@ -417,35 +412,33 @@ model SyncOperationRecord {
   status          String
   resultJson      Json
 
-  @@index([operationId])
-  @@index([idempotencyKey])
   @@index([actorId])
   @@index([recordId])
 }
 
 model ConflictRecord {
-  id               String    @id @default(uuid())
-  recordId         String
-  entityType       String
-  actorId          String
-  baseVersion      Int
-  serverVersion    Int
-  clientVersion    Int
+  id                String    @id @default(uuid()) @map("_id")
+  recordId          String
+  entityType        String
+  actorId           String
+  baseVersion       Int
+  serverVersion     Int
+  clientVersion     Int
   conflictingFields String[]
-  resolvedStrategy String?
-  resolvedById     String?
-  resolvedAt       DateTime?
-  status           String    @default("OPEN")
-  payloadLocal     Json
-  payloadServer    Json
-  createdAt        DateTime  @default(now())
+  resolvedStrategy  String?
+  resolvedById      String?
+  resolvedAt        DateTime?
+  status            String    @default("OPEN")
+  payloadLocal      Json
+  payloadServer     Json
+  createdAt         DateTime  @default(now())
 
   @@index([recordId])
   @@index([status])
 }
 
 model AppNotification {
-  id         String   @id @default(uuid())
+  id         String   @id @default(uuid()) @map("_id")
   userId     String
   title      String
   message    String
@@ -462,9 +455,9 @@ model AppNotification {
 }
 
 model AuditEvent {
-  id              String   @id @default(uuid())
+  id              String   @id @default(uuid()) @map("_id")
   timestamp       DateTime @default(now())
-  actorId         String
+  actorId         String?
   actorEmail      String?
   actorRole       String?
   action          String

@@ -78,7 +78,7 @@ app.use('/uploads', express.static(config.storageDir));
 // Health Check Endpoint
 app.get('/api/v1/health', async (req: Request, res: Response): Promise<void> => {
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await prisma.user.findFirst({ select: { id: true } });
     res.json({
       success: true,
       data: {
