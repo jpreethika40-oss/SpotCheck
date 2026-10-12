@@ -59,13 +59,13 @@ export function errorHandler(
   // 3. Prisma Known Request Errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
-      const target = (err.meta?.target as string[]) || [];
-      const field = target.join(', ');
+      const target = err.meta?.target;
+      const field = Array.isArray(target) ? target.join(', ') : (target ? String(target) : 'value');
       res.status(409).json({
         success: false,
         error: {
           code: 'DUPLICATE_RESOURCE',
-          message: `A record with this ${field || 'value'} already exists.`,
+          message: `A record with this ${field} already exists.`,
           details: { target },
         },
       });

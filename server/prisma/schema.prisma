@@ -301,7 +301,7 @@ model Inspection {
   itemsJson        Json
   version          Int              @default(1) // Concurrency token
   syncStatus       SyncStatus       @default(SYNCED)
-  idempotencyKey   String?          @unique
+  idempotencyKey   String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 

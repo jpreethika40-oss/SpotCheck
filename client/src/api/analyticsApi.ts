@@ -12,13 +12,39 @@ export interface AnalyticsDashboardData {
     avgResolutionTimeHours: number;
     syncPendingOffline: number;
     syncConflictsOpen: number;
+    totalInspections?: number;
+    completedInspections?: number;
+    draftInspections?: number;
+    completionRate?: number;
+    totalIssues?: number;
+    openIssues?: number;
+    verifiedIssues?: number;
   };
-  inspectionsByMonth: Array<{ month: string; completed: number; total: number }>;
-  issuesByCategory: Array<{ category: string; count: number }>;
-  issuesBySeverity: Array<{ severity: string; count: number }>;
-  issuesByFacility: Array<{ facilityName: string; count: number }>;
-  frequentFailures: Array<{ checkpointName: string; facilityName: string; failureCount: number }>;
-  recentActivity: Array<{ id: string; action: string; timestamp: string; actorName: string; details: any }>;
+  inspectionsByMonth?: Array<{ month: string; completed: number; total: number }>;
+  issuesByCategory?: Array<{ name?: string; category?: string; count: number }>;
+  issuesBySeverity?: Array<{ severity: string; count: number }>;
+  issuesByFacility?: Array<{ facilityName: string; count: number }>;
+  issuesByStatus?: Array<{ status: string; count: number }>;
+  frequentFailures?: Array<{ checkpointName: string; checkpointCode?: string; facilityName?: string; failureCount: number }>;
+  repeatCheckpoints?: Array<{ checkpointName: string; checkpointCode?: string; facilityName?: string; failureCount: number }>;
+  recentActivity?: Array<{ id: string; action: string; timestamp: string; actorName: string; details?: any }>;
+  recentInspections?: Array<{
+    id: string;
+    status: string;
+    createdAt: string;
+    completedAt?: string;
+    facility: { name: string };
+    inspector: { fullName: string };
+  }>;
+  recentWorkOrders?: Array<{
+    id: string;
+    title: string;
+    severity: string;
+    status: string;
+    version?: number;
+    createdAt: string;
+    facility: { name: string };
+  }>;
 }
 
 export const analyticsApi = {

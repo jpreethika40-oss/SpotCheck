@@ -130,7 +130,7 @@ router.get('/dashboard', async (req: AuthRequest, res: Response, next: NextFunct
 
     const checkpoints = await prisma.checkpoint.findMany({
       where: { id: { in: checkpointIds } },
-      select: { id: true, name: true, code: true },
+      select: { id: true, name: true, code: true, facility: { select: { name: true } } },
     });
 
     const repeatCheckpoints = repeatedFailures.map((rf) => {
@@ -139,39 +139,78 @@ router.get('/dashboard', async (req: AuthRequest, res: Response, next: NextFunct
         checkpointId: rf.checkpointId,
         checkpointName: chk?.name || 'Unassigned Area',
         checkpointCode: chk?.code || 'N/A',
+        facilityName: chk?.facility?.name || 'Main Facility',
         failureCount: rf._count.checkpointId,
       };
     });
 
-    // 6. Recent Activity (Recent inspections and work order events)
+    // 6. Issues by Facility
+    const facilityIssuesGroup = await prisma.issue.groupBy({
+      by: ['facilityId'],
+      _count: { id: true },
+    });
+    const allFacilities = await prisma.facility.findMany({ select: { id: true, name: true } });
+    const issuesByFacility = facilityIssuesGroup.map((fg) => {
+      const fac = allFacilities.find((f) => f.id === fg.facilityId);
+      return {
+        facilityId: fg.facilityId,
+        facilityName: fac?.name || 'Unknown Facility',
+        count: fg._count.id,
+      };
+    });
+
+    // 7. Recent Inspections
     const recentInspections = await prisma.inspection.findMany({
       where: facilityFilter,
-      take: 5,
+      take: 6,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         status: true,
         createdAt: true,
+        completedAt: true,
         facility: { select: { name: true } },
         inspector: { select: { fullName: true } },
       },
     });
 
+    // 8. Recent Work Orders
     const recentWorkOrders = await prisma.issue.findMany({
       where: facilityFilter,
-      take: 5,
+      take: 6,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         title: true,
         severity: true,
         status: true,
+        version: true,
         createdAt: true,
         facility: { select: { name: true } },
       },
     });
 
-    // 7. Average resolution time (hours)
+    // 9. Recent Audit Events Activity
+    const recentAuditRecords = await prisma.auditEvent.findMany({
+      take: 6,
+      orderBy: { timestamp: 'desc' },
+      select: {
+        id: true,
+        action: true,
+        timestamp: true,
+        actorEmail: true,
+        details: true,
+      },
+    });
+    const recentActivity = recentAuditRecords.map((a) => ({
+      id: a.id,
+      action: a.action,
+      timestamp: a.timestamp.toISOString(),
+      actorName: a.actorEmail?.split('@')[0] || 'System',
+      details: a.details,
+    }));
+
+    // 10. Average resolution time (hours)
     const verifiedIssuesList = await prisma.issue.findMany({
       where: {
         ...facilityFilter,
@@ -185,7 +224,7 @@ router.get('/dashboard', async (req: AuthRequest, res: Response, next: NextFunct
     if (verifiedIssuesList.length > 0) {
       const totalHours = verifiedIssuesList.reduce((acc, iss) => {
         const diffMs = (iss.verifiedAt?.getTime() || 0) - iss.createdAt.getTime();
-        return acc + diffMs / (1000 * 60 * 60);
+        return acc + Math.max(0, diffMs / (1000 * 60 * 60));
       }, 0);
       avgResolutionHours = Math.round((totalHours / verifiedIssuesList.length) * 10) / 10;
     }
@@ -207,12 +246,25 @@ router.get('/dashboard', async (req: AuthRequest, res: Response, next: NextFunct
           criticalIssues,
           overdueIssues,
           verifiedIssues,
-          avgResolutionHours,
+          avgResolutionHours: Math.max(0, avgResolutionHours),
+          inspectionsCompletedMonth: completedInspections,
+          inspectionsDuePending: overdueSchedules,
+          inspectionsOverdue: overdueSchedules,
+          inspectionsCompletionRate: completionRate,
+          openWorkOrders: openIssues,
+          criticalWorkOrders: criticalIssues,
+          overdueWorkOrders: overdueIssues,
+          avgResolutionTimeHours: Math.max(0, avgResolutionHours),
+          syncPendingOffline: 0,
+          syncConflictsOpen: 0,
         },
         issuesByCategory,
         issuesBySeverity,
         issuesByStatus,
+        issuesByFacility,
         repeatCheckpoints,
+        frequentFailures: repeatCheckpoints,
+        recentActivity,
         recentInspections,
         recentWorkOrders,
       },

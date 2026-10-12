@@ -162,7 +162,7 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction): Pr
         reportedById: req.user!.id,
         status: data.assignedToId ? WorkOrderStatus.ASSIGNED : WorkOrderStatus.REPORTED,
         assignedToId: data.assignedToId || null,
-        dueDate: data.dueDate ? new Date(data.dueDate) : null,
+        dueDate: data.dueDate && typeof data.dueDate === 'string' && data.dueDate.trim() ? new Date(data.dueDate) : null,
         evidenceAttachmentIds: data.evidenceAttachmentIds || [],
         workAttachmentIds: [],
         version: 1,

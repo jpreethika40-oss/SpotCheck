@@ -138,7 +138,7 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction): Pr
 
     const inspection = await prisma.inspection.create({
       data: {
-        id: data.id,
+        id: data.id || undefined,
         templateId: data.templateId,
         templateVersion: 1,
         facilityId: data.facilityId,
@@ -146,14 +146,15 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction): Pr
         checkpointId: data.checkpointId || null,
         assetId: data.assetId || null,
         inspectorId: req.user!.id,
-        status: data.status as InspectionStatus,
-        startedAt: new Date(data.startedAt),
+        status: (data.status as InspectionStatus) || InspectionStatus.SUBMITTED,
+        startedAt: data.startedAt ? new Date(data.startedAt) : new Date(),
+        completedAt: data.completedAt ? new Date(data.completedAt) : new Date(),
         summaryNotes: data.summaryNotes || null,
         weatherCondition: data.weatherCondition || null,
-        itemsJson: data.items,
+        itemsJson: data.items || [],
         version: 1,
         syncStatus: SyncStatus.SYNCED,
-        idempotencyKey: data.idempotencyKey || null,
+        idempotencyKey: data.idempotencyKey || undefined,
       },
       include: { facility: true, inspector: true },
     });

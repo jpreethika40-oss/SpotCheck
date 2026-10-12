@@ -69,20 +69,47 @@ export const WorkOrdersList: React.FC = () => {
     });
   }, [statusFilter, severityFilter]);
 
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [submittingOrder, setSubmittingOrder] = useState(false);
+
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await workOrderApi.createWorkOrder(newOrder);
-    if (res.success) {
-      setCreateOpen(false);
-      setNewOrder({
-        facilityId: '',
-        title: '',
-        description: '',
-        category: 'HVAC',
-        severity: 'MEDIUM',
-        dueDate: '',
-      });
-      fetchWorkOrders();
+    setCreateError(null);
+    if (!newOrder.facilityId) {
+      setCreateError('Please select a facility.');
+      return;
+    }
+    try {
+      setSubmittingOrder(true);
+      const payload: any = {
+        facilityId: newOrder.facilityId,
+        title: newOrder.title,
+        description: newOrder.description,
+        category: newOrder.category || 'HVAC',
+        severity: newOrder.severity || 'MEDIUM',
+      };
+      if (newOrder.dueDate && newOrder.dueDate.trim()) {
+        payload.dueDate = new Date(newOrder.dueDate).toISOString();
+      }
+      const res = await workOrderApi.createWorkOrder(payload);
+      if (res.success) {
+        setCreateOpen(false);
+        setNewOrder({
+          facilityId: '',
+          title: '',
+          description: '',
+          category: 'HVAC',
+          severity: 'MEDIUM',
+          dueDate: '',
+        });
+        fetchWorkOrders();
+      } else {
+        setCreateError(res.error?.message || 'Server rejected work order. Please check inputs.');
+      }
+    } catch (err: any) {
+      setCreateError(err.message || 'Failed to submit work order to server.');
+    } finally {
+      setSubmittingOrder(false);
     }
   };
 
@@ -293,6 +320,12 @@ export const WorkOrdersList: React.FC = () => {
         description="Create an issue requiring technician repair and verified sign-off."
       >
         <form onSubmit={handleCreateSubmit} className="space-y-3">
+          {createError && (
+            <div className="p-2.5 rounded bg-crimson-bg border border-crimson/20 text-crimson text-xs flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{createError}</span>
+            </div>
+          )}
           <Select
             label="Facility"
             required

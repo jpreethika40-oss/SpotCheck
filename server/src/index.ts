@@ -75,6 +75,35 @@ app.use(
 // Serve static evidence uploads
 app.use('/uploads', express.static(config.storageDir));
 
+// Root Endpoint - Welcome & Service Info
+app.get(['/', '/api', '/api/v1'], (req: Request, res: Response): void => {
+  res.json({
+    success: true,
+    message: 'SpotCheck API Server is running',
+    version: '1.0.0',
+    environment: config.nodeEnv,
+    healthCheck: '/api/v1/health',
+    frontendUrl: config.corsOrigin,
+    endpoints: [
+      '/api/v1/health',
+      '/api/v1/auth',
+      '/api/v1/users',
+      '/api/v1/facilities',
+      '/api/v1/checkpoints',
+      '/api/v1/templates',
+      '/api/v1/inspections',
+      '/api/v1/work-orders',
+      '/api/v1/sync',
+      '/api/v1/conflicts',
+      '/api/v1/uploads',
+      '/api/v1/analytics',
+      '/api/v1/reports',
+      '/api/v1/notifications',
+      '/api/v1/audit',
+    ],
+  });
+});
+
 // Health Check Endpoint
 app.get('/api/v1/health', async (req: Request, res: Response): Promise<void> => {
   try {
